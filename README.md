@@ -1,13 +1,15 @@
 # release-notes
-[![Build Status](https://travis-ci.com/corneliusweig/release-notes.svg?branch=master)](https://travis-ci.com/corneliusweig/release-notes)
-[![LICENSE](https://img.shields.io/github/license/corneliusweig/release-notes.svg)](https://github.com/corneliusweig/release-notes/blob/master/LICENSE)
-[![Go Report Card](https://goreportcard.com/badge/corneliusweig/release-notes)](https://goreportcard.com/report/corneliusweig/release-notes)
+[![Build Status](https://travis-ci.com/gsquared94/release-notes.svg?branch=master)](https://travis-ci.com/gsquared94/release-notes)
+[![LICENSE](https://img.shields.io/github/license/gsquared94/release-notes.svg)](https://github.com/gsquared94/release-notes/blob/master/LICENSE)
+[![Go Report Card](https://goreportcard.com/badge/gsquared94/release-notes)](https://goreportcard.com/report/gsquared94/release-notes)
 <!--
-[![Code Coverage](https://codecov.io/gh/corneliusweig/release-notes/branch/master/graph/badge.svg)](https://codecov.io/gh/corneliusweig/release-notes)
-[![Releases](https://img.shields.io/github/release-pre/corneliusweig/release-notes.svg)](https://github.com/corneliusweig/release-notes/releases)
+[![Code Coverage](https://codecov.io/gh/gsquared94/release-notes/branch/master/graph/badge.svg)](https://codecov.io/gh/gsquared94/release-notes)
+[![Releases](https://img.shields.io/github/release-pre/gsquared94/release-notes.svg)](https://github.com/gsquared94/release-notes/releases)
 -->
+Forked from https://github.com/corneliusweig/release-notes
 
 Generates a markdown changelog of merged pull requests since last release.
+It consists of sections `New Features`, `Fixes`, `Updates & Refactors`, and `Docs updates` based on the PRs being labelled with `release/new-feature`, `release/fixes`, `releases/refactor` and `release/doc-updates` respectively
 
 The script uses the GitHub API to retrieve a list of all merged pull
 requests since the last release. The found pull requests are then
@@ -33,10 +35,19 @@ For example:
 
 which will output
 ```text
-Collecting pull request that were merged since the last release: v0.38.0 (2019-09-12 22:56:07 +0000 UTC)
+New Features:
 * add github pull request template [#2894](https://github.com/googlecontainertools/skaffold/pull/2894)
+
+
+Fixes:
 * Add Jib-Gradle support for Kotlin buildscripts [#2914](https://github.com/googlecontainertools/skaffold/pull/2914)
+
+
+Updates & Refactors:
 * Add missing T.Helper() in testutil.Check* as required [#2913](https://github.com/googlecontainertools/skaffold/pull/2913)
+
+
+Docs updates:
 * Move buildpacks tutorial to buildpacks example README [#2908](https://github.com/googlecontainertools/skaffold/pull/2908)
 ...
 ```
@@ -45,7 +56,7 @@ Collecting pull request that were merged since the last release: v0.38.0 (2019-0
 
 ##### `--token`
 
-Specify a personal Github Token if you are hitting a rate limit anonymously (see https://github.com/settings/tokens).
+Specify a personal Github Token if you are hitting a rate limit anonymously (see https://github.com/settings/tokens). Otherwise, set the environment variable `GITHUB_TOKEN` (already set when running in a Github Action) 
 
 ##### `--since`
 
@@ -66,5 +77,5 @@ For example:
 Currently, you need a working Go compiler to build this script:
 
 ```sh
-go get github.com/corneliusweig/release-notes
+go get github.com/gsquared94/release-notes
 ```

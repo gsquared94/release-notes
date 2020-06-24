@@ -1,4 +1,4 @@
-module github.com/corneliusweig/release-notes
+module github.com/gsquared94/release-notes
 
 go 1.13
 

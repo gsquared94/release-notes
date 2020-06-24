@@ -45,6 +45,7 @@ import (
 	"os"
 	"os/signal"
 	"regexp"
+	"strings"
 	"syscall"
 
 	"github.com/blang/semver"
@@ -85,19 +86,68 @@ var rootCmd = &cobra.Command{
 	Args:    cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
 		org, repo = args[0], args[1]
-		printPullRequests()
+		printChangeLog()
 	},
 }
 
 func main() {
-	rootCmd.Flags().StringVar(&token, "token", "", "Specify personal Github Token if you are hitting a rate limit anonymously. https://github.com/settings/tokens")
+	rootCmd.Flags().StringVar(&token, "token", os.Getenv("GITHUB_TOKEN"), "Specify personal Github Token if you are hitting a rate limit anonymously. https://github.com/settings/tokens")
 	rootCmd.Flags().StringVar(&since, "since", "patch", "The previous tag up to which PRs should be collected (one of any, patch, minor, major, or a valid semver) [defaults to 'patch']")
 	if err := rootCmd.Execute(); err != nil {
 		logrus.Fatal(err)
 	}
 }
 
-func printPullRequests() {
+func printChangeLog() {
+	prs := getPullRequests()
+	prMap := map[string][]*github.PullRequest{
+		"release/new-feature": make([]*github.PullRequest, 0),
+		"release/fixes":       make([]*github.PullRequest, 0),
+		"release/refactor":    make([]*github.PullRequest, 0),
+		"release/doc-updates": make([]*github.PullRequest, 0),
+	}
+
+	for _, pr := range prs {
+		for _, l := range pr.Labels {
+			if _, ok := prMap[*l.Name]; ok {
+				prMap[*l.Name] = append(prMap[*l.Name], pr)
+				break
+			}
+		}
+	}
+
+	arr := make([]string, 0)
+
+	if len(prMap["release/new-feature"]) > 0 {
+		arr = append(arr, "\nNew Features:"+formatSection(prMap["release/new-feature"]))
+	}
+	if len(prMap["release/fixes"]) > 0 {
+		arr = append(arr, "\nFixes:"+formatSection(prMap["release/fixes"]))
+	}
+	if len(prMap["release/refactor"]) > 0 {
+		arr = append(arr, "\nUpdates & Refactors:"+formatSection(prMap["release/refactor"]))
+	}
+	if len(prMap["release/doc-updates"]) > 0 {
+		arr = append(arr, "\nDocs updates:"+formatSection(prMap["release/doc-updates"]))
+	}
+
+	changes := strings.Join(arr, "\n")
+	fmt.Printf("%s\n\n", changes)
+}
+
+func formatSection(prs []*github.PullRequest) string {
+	arr := make([]string, len(prs))
+	for _, pr := range prs {
+		arr = append(arr, formatPR(pr))
+	}
+	return strings.Join(arr, "\n")
+}
+
+func formatPR(pr *github.PullRequest) string {
+	return fmt.Sprintf("* %s [#%d](https://github.com/%s/%s/pull/%d)\n", pr.GetTitle(), pr.GetNumber(), org, repo, pr.GetNumber())
+}
+
+func getPullRequests() []*github.PullRequest {
 	ctx := contextWithCtrlCHandler()
 	client := getClient(ctx)
 
@@ -106,7 +156,7 @@ func printPullRequests() {
 		logrus.Fatal(err)
 	}
 	lastReleaseTime := lastRelease.GetPublishedAt().Time
-	fmt.Fprintf(os.Stderr, "Collecting pull request that were merged since the last release: %s (%s)\n", lastRelease.GetTagName(), lastReleaseTime)
+	result := make([]*github.PullRequest, 0)
 
 	for page := 1; page != 0; {
 		pullRequests, resp, err := client.PullRequests.List(ctx, org, repo, &github.PullRequestListOptions{
@@ -122,7 +172,6 @@ func printPullRequests() {
 			logrus.Fatalf("Failed to list pull requests: %v", err)
 		}
 		page = resp.NextPage
-
 		for idx := range pullRequests {
 			pr := pullRequests[idx]
 			if pr.GetUpdatedAt().Before(lastReleaseTime) {
@@ -130,10 +179,11 @@ func printPullRequests() {
 				break
 			}
 			if pr.MergedAt != nil && pr.MergedAt.After(lastReleaseTime) {
-				fmt.Printf("* %s [#%d](https://github.com/%s/%s/pull/%d)\n", pr.GetTitle(), pr.GetNumber(), org, repo, pr.GetNumber())
+				result = append(result, pr)
 			}
 		}
 	}
+	return result
 }
 
 func fetchLastRelease(ctx context.Context, client *github.Client) (*github.RepositoryRelease, error) {
