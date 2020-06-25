@@ -45,6 +45,7 @@ import (
 	"os"
 	"os/signal"
 	"regexp"
+	"sort"
 	"strings"
 	"syscall"
 
@@ -133,6 +134,42 @@ func printChangeLog() {
 
 	changes := strings.Join(arr, "\n")
 	fmt.Printf("%s\n\n", changes)
+	printContributors(prs)
+}
+
+func printContributors(prs []*github.PullRequest) {
+	set := make(map[string]string)
+	ctx := contextWithCtrlCHandler()
+	client := getClient(ctx)
+
+	for _, pr := range prs {
+		id := pr.User.Login
+		if id == nil {
+			continue
+		}
+		if _, ok := set[*id]; ok {
+			continue
+		}
+
+		name := pr.User.Name
+		if name == nil {
+			if user, _, err := client.Users.Get(ctx, *id); err == nil {
+				name = user.Name
+			}
+		}
+
+		if name == nil {
+			name = id
+		}
+		set[*id] = *name
+	}
+
+	names := make([]string, 0)
+	for _, name := range set {
+		names = append(names, fmt.Sprintf("- %v", name))
+	}
+	sort.Strings(names)
+	fmt.Printf("Huge thanks goes out to all of our contributors for this release:\n%v\n", strings.Join(names, "\n"))
 }
 
 func formatSection(prs []*github.PullRequest) string {
