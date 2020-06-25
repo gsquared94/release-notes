@@ -74,8 +74,20 @@ For example:
 
 ## Installation
 
-Currently, you need a working Go compiler to build this script:
-
 ```sh
 go get github.com/gsquared94/release-notes
 ```
+Alternately,
+- For Linux
+```sh
+curl -Lo release-notes.tar.gz https://github.com/gsquared94/release-notes/releases/download/v0.1.2/release-notes-linux-amd64.tar.gz
+tar -xvf release-notes.tar.gz
+mv release-notes /usr/local/bin
+```
+- For MacOS
+```sh
+curl -Lo release-notes.tar.gz https://github.com/gsquared94/release-notes/releases/download/v0.1.2/release-notes-darwin-amd64.tar.gz
+tar -xvf release-notes.tar.gz
+mv release-notes /usr/local/bin
+```
+
